@@ -117,7 +117,7 @@ export default function QuizzesPage() {
     return (
         <div style={{ padding: '32px 40px', maxWidth: 900, margin: '0 auto' }}>
             <div style={{ marginBottom: 24 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', background: 'rgba(59,130,246,0.12)', color: '#60a5fa', borderRadius: 20, border: '1px solid rgba(59,130,246,0.2)' }}>Module 9: Knowledge Test</span>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', background: 'rgba(59,130,246,0.12)', color: '#60a5fa', borderRadius: 20, border: '1px solid rgba(59,130,246,0.2)' }}>Module 11: Knowledge Test</span>
                 <h1 style={{ fontSize: 28, fontWeight: 800, marginTop: 8, letterSpacing: '-0.5px' }}>Kafka Quizzes</h1>
                 <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>Test your understanding from beginner to advanced.</p>
             </div>

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion'
 import { Link } from 'react-router-dom'
-import { BookOpen, Layers, Zap, Users, GitBranch, Cpu, Play, BarChart2, ArrowRight, Activity } from 'lucide-react'
+import { BookOpen, Layers, Zap, Users, GitBranch, Cpu, Play, BarChart2, ArrowRight, Activity, GitCompare, Terminal, HelpCircle } from 'lucide-react'
 
 const MODULES = [
     {
@@ -68,9 +68,25 @@ const MODULES = [
         tag: 'Comparison',
     },
     {
+        path: '/zookeeper-kraft',
+        icon: GitCompare,
+        title: 'Module 9: ZooKeeper vs KRaft',
+        desc: 'Understand why Kafka removed ZooKeeper, how KRaft works, and how to migrate.',
+        color: '#22c55e',
+        tag: 'Architecture',
+    },
+    {
+        path: '/cli',
+        icon: Terminal,
+        title: 'Module 10: CLI Reference',
+        desc: '36 production-grade CLI commands with expert tips, flags, and copy-to-clipboard.',
+        color: '#eab308',
+        tag: 'Pro Reference',
+    },
+    {
         path: '/quizzes',
-        icon: Activity,
-        title: 'Module 9: Quizzes',
+        icon: HelpCircle,
+        title: 'Module 11: Quizzes',
         desc: 'Test your knowledge from basics to advanced Kafka internals.',
         color: '#60a5fa',
         tag: 'Knowledge',
@@ -78,7 +94,7 @@ const MODULES = [
 ]
 
 const STATS = [
-    { label: 'Modules', value: '9' },
+    { label: 'Modules', value: '11' },
     { label: 'Simulations', value: '20+' },
     { label: 'Concepts', value: '50+' },
     { label: 'Interactive Labs', value: '15' },

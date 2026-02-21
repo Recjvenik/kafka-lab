@@ -10,6 +10,8 @@ import AdvancedPage from './pages/AdvancedPage'
 import PlaygroundPage from './pages/PlaygroundPage'
 import ComparePage from './pages/ComparePage'
 import QuizzesPage from './pages/QuizzesPage'
+import ZooKeeperKRaftPage from './pages/ZooKeeperKRaftPage'
+import CLIPage from './pages/CLIPage'
 import './index.css'
 
 export default function App() {
@@ -27,6 +29,8 @@ export default function App() {
           <Route path="playground" element={<PlaygroundPage />} />
           <Route path="compare" element={<ComparePage />} />
           <Route path="quizzes" element={<QuizzesPage />} />
+          <Route path="zookeeper-kraft" element={<ZooKeeperKRaftPage />} />
+          <Route path="cli" element={<CLIPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

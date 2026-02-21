@@ -2,7 +2,7 @@ import { Outlet, NavLink, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
     BookOpen, Layers, Zap, Users, GitBranch, Cpu, Play, BarChart2,
-    HelpCircle, Home, ChevronRight, Activity
+    HelpCircle, Home, ChevronRight, Activity, GitCompare, Terminal
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -15,6 +15,8 @@ const NAV_ITEMS = [
     { path: '/advanced', label: 'Advanced', icon: Cpu, desc: 'ISR, Storage, EOS' },
     { path: '/playground', label: 'Playground', icon: Play, desc: 'Full sandbox' },
     { path: '/compare', label: 'Kafka vs Others', icon: BarChart2, desc: 'Comparison' },
+    { path: '/zookeeper-kraft', label: 'ZK vs KRaft', icon: GitCompare, desc: 'Architecture deep-dive' },
+    { path: '/cli', label: 'CLI Reference', icon: Terminal, desc: 'Professional commands' },
     { path: '/quizzes', label: 'Quizzes', icon: HelpCircle, desc: 'Test knowledge' },
 ]
 
