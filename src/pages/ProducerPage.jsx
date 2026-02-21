@@ -24,6 +24,7 @@ export default function ProducerPage() {
     const [lingerMs, setLingerMs] = useState(0)
     const [sendCount, setSendCount] = useState(0)
     const intervalRef = useRef(null)
+    const sendBurstRef = useRef(null)  // always points to latest sendBurst
 
     const topic = cluster.topics?.get?.(selectedTopic)
     const partitions = topic?.partitions || []
@@ -34,7 +35,7 @@ export default function ProducerPage() {
         produceMessages(messageRate, key)
         setSendCount(c => c + messageRate)
 
-        // Simulate latency data point
+        // Simulate latency data point — uses current acks via closure
         const jitter = Math.random() * 0.4 - 0.2
         const baseLatency = acks === 0 ? 2 : acks === 1 ? 12 : 55
         const latency = +(baseLatency * (1 + jitter)).toFixed(1)
@@ -52,8 +53,14 @@ export default function ProducerPage() {
         }, 1200)
     }
 
+    // Keep the ref always pointing to the latest sendBurst (fixes stale closure in interval)
+    sendBurstRef.current = sendBurst
+
     useEffect(() => {
         setProducerConfig?.({ acks, idempotent, batchSize, lingerMs })
+        // Clear latency history when acks mode changes so the chart reflects
+        // the new latency profile immediately rather than blending old values
+        setLatencyData([])
     }, [acks, idempotent, batchSize, lingerMs])
 
     function toggleContinuous() {
@@ -63,7 +70,9 @@ export default function ProducerPage() {
             setSending(false)
         } else {
             setSending(true)
-            intervalRef.current = setInterval(sendBurst, 1000)
+            // Use ref so the interval always calls the latest sendBurst,
+            // picking up current acks/messageRate/keyMode/partitions
+            intervalRef.current = setInterval(() => sendBurstRef.current(), 1000)
         }
     }
 
@@ -227,7 +236,7 @@ function PartitionFlow({ partitions, particles }) {
                                 transition: 'all 0.2s',
                             }}>
                                 <div style={{ fontSize: 11, color: '#475569' }}>P-{p.id}</div>
-                                <div style={{ fontSize: 10, color: '#334155', marginTop: 4 }}>{p.log?.length || 0}</div>
+                                <div style={{ fontSize: 10, color: '#334155', marginTop: 4 }}>{p.nextOffset ?? p.log?.length ?? 0} msgs</div>
                             </div>
                         </div>
                     )

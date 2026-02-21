@@ -93,12 +93,28 @@ export const useKafkaStore = create((set, get) => {
       const { cluster, coordinator } = get();
       cluster.createTopic(name, numPartitions, replicationFactor);
       const pm = buildPartitionMap(cluster);
+      // Subscribe all existing groups to the new topic so they rebalance correctly
+      coordinator.getAllGroups().forEach(group => {
+        if (!group.topicNames.includes(name)) {
+          group.topicNames.push(name);
+        }
+      });
       coordinator.rebalanceAll(Array.from(cluster.topics.values()), pm);
       set(s => ({ partitionMap: pm, _rev: s._rev + 1 }));
     },
 
-    /** Set active topic for visualizers */
-    selectTopic: (name) => set({ selectedTopic: name }),
+    /** Set active topic for visualizers — also subscribe all groups and rebalance */
+    selectTopic: (name) => {
+      const { cluster, coordinator, partitionMap } = get();
+      // Make sure all groups are subscribed to this topic so they show correct assignments
+      coordinator.getAllGroups().forEach(group => {
+        if (!group.topicNames.includes(name)) {
+          group.topicNames.push(name);
+        }
+      });
+      coordinator.rebalanceAll(Array.from(cluster.topics.values()), partitionMap);
+      set(s => ({ selectedTopic: name, _rev: s._rev + 1 }));
+    },
 
     /** Add a broker to the cluster */
     addBroker: () => {
@@ -117,8 +133,10 @@ export const useKafkaStore = create((set, get) => {
 
     /** Restart a downed broker */
     restartBroker: (id) => {
-      const { replicationMgr } = get();
+      const { replicationMgr, cluster, coordinator, partitionMap } = get();
       replicationMgr.restartBroker(id);
+      // Rebalance consumers — they may now have access to newly-elected leaders
+      coordinator.rebalanceAll(Array.from(cluster.topics.values()), partitionMap);
       set(s => ({ _rev: s._rev + 1 }));
     },
 

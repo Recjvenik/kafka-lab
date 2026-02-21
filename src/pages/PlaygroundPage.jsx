@@ -93,11 +93,12 @@ export default function PlaygroundPage() {
             intervalRef.current = setInterval(() => {
                 const key = msgKey || null
                 produceMessages(msgRate, key)
-                // spawn visual particles
+                // spawn visual particles — randomise pid so ALL partitions can glow
                 setParticles(prev => {
-                    const newOnes = Array.from({ length: Math.min(msgRate, 5) }, (_, i) => ({
+                    const partCount = Math.max(selectedTopicObj?.partitions?.length || 3, 1)
+                    const newOnes = Array.from({ length: Math.min(msgRate, partCount) }, (_, i) => ({
                         id: `${Date.now()}-${i}`,
-                        pid: i % Math.max((selectedTopicObj?.partitions?.length || 3), 1),
+                        pid: Math.floor(Math.random() * partCount),
                     }))
                     setTimeout(() => {
                         setParticles(p => p.filter(x => !newOnes.find(n => n.id === x.id)))
@@ -117,11 +118,12 @@ export default function PlaygroundPage() {
         produceMessages(msgRate, key)
         addEvent('success', `Sent ${msgRate} message(s) to "${selectedTopic}"${key ? ` with key="${key}"` : ' (round-robin)'}`)
         setActiveStep(s => Math.max(s, 2))
-        // Spawn particles
+        // Spawn particles — randomise pid so all partitions can glow, not just 0..N-1
         setParticles(prev => {
-            const newOnes = Array.from({ length: Math.min(msgRate, 6) }, (_, i) => ({
+            const partCount = Math.max(selectedTopicObj?.partitions?.length || 3, 1)
+            const newOnes = Array.from({ length: Math.min(msgRate, partCount) }, (_, i) => ({
                 id: `burst-${Date.now()}-${i}`,
-                pid: i % Math.max((selectedTopicObj?.partitions?.length || 3), 1),
+                pid: Math.floor(Math.random() * partCount),
             }))
             setTimeout(() => setParticles(p => p.filter(x => !newOnes.find(n => n.id === x.id))), 900)
             return [...prev, ...newOnes]
@@ -133,6 +135,7 @@ export default function PlaygroundPage() {
         createTopic(newTopicName.trim(), newTopicParts, Math.min(2, brokers.filter(b => b.isAlive).length))
         selectTopic(newTopicName.trim())
         addEvent('success', `Topic "${newTopicName}" created with ${newTopicParts} partition(s).`)
+        setNewTopicName('')  // clear the name so the user sees success feedback
     }
 
     function handleKillBroker(id) {
@@ -256,9 +259,15 @@ export default function PlaygroundPage() {
                         {brokers.map(b => (
                             <div key={b.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                    {/* Status dot */}
                                     <div style={{ width: 7, height: 7, borderRadius: '50%', background: b.isAlive ? C.green : C.red }} />
-                                    <span style={{ fontSize: 12, color: b.isAlive ? '#e2e8f0' : C.dim }}>broker-{b.id}</span>
+                                    <span style={{ fontSize: 12, color: b.isAlive ? '#e2e8f0' : C.dim }}>
+                                        {cluster.controllerId === b.id && b.isAlive ? '👑 ' : ''}
+                                        broker-{b.id}
+                                    </span>
                                     {b.partitionCount > 0 && <span style={{ fontSize: 9, color: C.dim }}>{b.partitionCount}p</span>}
+                                    {cluster.controllerId === b.id && b.isAlive &&
+                                        <span style={{ fontSize: 8, color: C.purple, background: 'rgba(168,85,247,0.1)', padding: '1px 4px', borderRadius: 3 }}>controller</span>}
                                 </div>
                                 <button
                                     onClick={() => b.isAlive ? handleKillBroker(b.id) : handleRestartBroker(b.id)}
@@ -288,7 +297,7 @@ export default function PlaygroundPage() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
 
                     {/* Cluster Health Bar */}
-                    <ClusterHealthBar brokers={brokers} groups={groups} topics={topics} />
+                    <ClusterHealthBar brokers={brokers} groups={groups} topics={topics} selectedTopic={selectedTopic} />
 
                     {/* Flow Diagram */}
                     <FlowDiagram
@@ -359,29 +368,51 @@ export default function PlaygroundPage() {
 }
 
 // ─── Cluster Health Bar ───────────────────────────────────────────────────────
-function ClusterHealthBar({ brokers, groups, topics }) {
+function ClusterHealthBar({ brokers, groups, topics, selectedTopic }) {
     const alive = brokers.filter(b => b.isAlive).length
-    const totalPartitions = topics.reduce((s, t) => s + t.partitions.length, 0)
-    const totalMessages = topics.reduce((s, t) => s + t.totalMessages, 0)
-    const totalConsumers = groups.reduce((s, g) => s + g.consumers.length, 0)
+
+    // Selected topic object (for per-topic stats)
+    const topicObj = topics.find(t => t.name === selectedTopic)
+
+    // Partitions: selected topic's partition count
+    const partitions = topicObj
+        ? topicObj.partitions.length
+        : topics.reduce((s, t) => s + t.partitions.length, 0)
+
+    // Messages: sum of nextOffset across selected topic's partitions (no 200 cap)
+    const messages = topicObj
+        ? topicObj.partitions.reduce((s, p) => s + (p.nextOffset ?? p.log.length), 0)
+        : topics.reduce((s, t) => s + t.totalMessages, 0)
+
+    // Consumers: count those whose assignment includes the selected topic
+    const consumers = topicObj
+        ? groups.reduce((sum, g) => {
+            const count = (g.consumers || []).filter(c =>
+                g.topicNames?.includes(selectedTopic)
+            ).length
+            return sum + count
+        }, 0)
+        : groups.reduce((s, g) => s + g.consumers.length, 0)
+
+    const tLabel = selectedTopic ? ` (${selectedTopic})` : ''
 
     const stats = [
-        { label: 'Brokers', value: `${alive}/${brokers.length}`, color: alive === brokers.length ? C.green : C.red, tip: 'Online / Total' },
-        { label: 'Topics', value: topics.length, color: C.purple, tip: 'Active topics' },
-        { label: 'Partitions', value: totalPartitions, color: C.cyan, tip: 'Total partition slots' },
-        { label: 'Consumers', value: totalConsumers, color: C.yellow, tip: 'Across all groups' },
-        { label: 'Messages', value: totalMessages, color: C.orange, tip: 'In partition logs' },
+        { label: 'Brokers', value: `${alive}/${brokers.length}`, color: alive === brokers.length ? C.green : C.red },
+        { label: 'Topics', value: topics.length, color: C.purple },
+        { label: `Partitions${tLabel}`, value: partitions, color: C.cyan },
+        { label: `Consumers${tLabel}`, value: consumers, color: C.yellow },
+        { label: `Messages${tLabel}`, value: messages, color: C.orange },
     ]
 
     return (
         <div className="glass" style={{ borderRadius: 14, padding: '10px 16px', display: 'flex', gap: 0, justifyContent: 'space-around' }}>
             {stats.map((s, i) => (
                 <div key={s.label} style={{
-                    textAlign: 'center', padding: '4px 16px',
+                    textAlign: 'center', padding: '4px 12px', flex: 1, minWidth: 0,
                     borderRight: i < stats.length - 1 ? '1px solid rgba(255,255,255,0.06)' : 'none',
                 }}>
                     <div style={{ fontSize: 20, fontWeight: 800, color: s.color }}>{s.value}</div>
-                    <div style={{ fontSize: 10, color: C.dim, marginTop: 1 }}>{s.label}</div>
+                    <div style={{ fontSize: 9, color: C.dim, marginTop: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{s.label}</div>
                 </div>
             ))}
         </div>
@@ -407,14 +438,23 @@ function FlowDiagram({ topic, groups, brokers, particles, onAddConsumer, onRemov
     })
 
     // Unique consumers visible in the current topic across all groups
-    const allConsumers = groups.flatMap(g =>
-        g.consumers.filter(c => c.isAlive).map(c => ({
-            ...c,
-            groupId: g.id,
-            groupColor: g.color,
-            assignedPartitions: (g.assignment?.[c.id] || []).filter(a => a.topicName === topicName),
-        }))
-    )
+    const allConsumers = groups.flatMap(g => {
+        // assignment is { consumerId -> [{topicName, partitionId}] }
+        // Use the group's assignment map to find what this consumer owns in the current topic
+        return g.consumers.filter(c => c.isAlive).map(c => {
+            const assignedAll = g.assignment?.[c.id] || []
+            const assignedForTopic = assignedAll.filter(a => a.topicName === topicName)
+            return {
+                ...c,
+                groupId: g.id,
+                groupColor: g.color,
+                assignedPartitions: assignedForTopic,
+            }
+        })
+    })
+
+    // Consumer particles – fire when there are producer particles (messages flowing through partitions to consumers)
+    const consumerParticles = particles.length > 0 ? particles.slice(0, 3) : []
 
     return (
         <div className="glass" style={{ borderRadius: 14, padding: 20 }}>
@@ -462,20 +502,29 @@ function FlowDiagram({ topic, groups, brokers, particles, onAddConsumer, onRemov
                             No topic selected
                         </div>
                     ) : partitions.map(p => {
+                        const isOffline = p.leaderId === -1
                         const broker = brokers.find(b => b.id === p.leaderId)
                         const owners = ownership[p.id] || []
                         const isActive = particles.some(pt => pt.pid === p.id)
+                        const leaderOk = !isOffline && broker?.isAlive !== false
+                        const badgeBg = isOffline ? 'rgba(239,68,68,0.15)' : leaderOk ? 'rgba(249,115,22,0.15)' : 'rgba(239,68,68,0.15)'
+                        const badgeColor = isOffline ? C.red : leaderOk ? C.orange : C.red
+                        const badgeBorder = isOffline ? 'rgba(239,68,68,0.4)' : leaderOk ? 'rgba(249,115,22,0.3)' : 'rgba(239,68,68,0.3)'
+                        const badgeText = isOffline ? '⚡ OFFLINE' : leaderOk ? `★ B-${p.leaderId}` : `⚠ B-${p.leaderId} DOWN`
                         return (
                             <motion.div key={p.id}
                                 animate={{
-                                    boxShadow: isActive ? `0 0 12px ${C.yellow}50` : '0 0 0px transparent',
-                                    borderColor: isActive ? C.yellow : 'rgba(255,255,255,0.08)',
+                                    boxShadow: isOffline
+                                        ? '0 0 10px rgba(239,68,68,0.4)'
+                                        : isActive ? `0 0 12px ${C.yellow}50` : '0 0 0px transparent',
+                                    borderColor: isOffline ? C.red : isActive ? C.yellow : 'rgba(255,255,255,0.08)',
                                 }}
                                 transition={{ duration: 0.3 }}
                                 style={{
-                                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)',
+                                    background: isOffline ? 'rgba(239,68,68,0.06)' : 'rgba(255,255,255,0.03)',
+                                    border: '1px solid rgba(255,255,255,0.08)',
                                     borderRadius: 10, padding: '8px 12px',
-                                    display: 'flex', alignItems: 'center', gap: 10, position: 'relative',
+                                    display: 'flex', alignItems: 'center', gap: 10,
                                 }}>
                                 {/* Partition label */}
                                 <div style={{ minWidth: 28, fontSize: 11, fontWeight: 700, color: C.slate }}>P-{p.id}</div>
@@ -483,37 +532,38 @@ function FlowDiagram({ topic, groups, brokers, particles, onAddConsumer, onRemov
                                 {/* Leader badge */}
                                 <div style={{
                                     fontSize: 9, padding: '2px 6px', borderRadius: 5, fontWeight: 600,
-                                    background: broker?.isAlive !== false ? 'rgba(249,115,22,0.15)' : 'rgba(239,68,68,0.15)',
-                                    color: broker?.isAlive !== false ? C.orange : C.red,
-                                    border: `1px solid ${broker?.isAlive !== false ? 'rgba(249,115,22,0.3)' : 'rgba(239,68,68,0.3)'}`,
+                                    background: badgeBg, color: badgeColor, border: `1px solid ${badgeBorder}`,
                                 }}>
-                                    {broker?.isAlive !== false ? `★ B-${p.leaderId}` : `⚠ B-${p.leaderId} DOWN`}
+                                    {badgeText}
                                 </div>
 
                                 {/* ISR dots */}
-                                <div style={{ display: 'flex', gap: 3 }}>
-                                    {p.isrIds?.map(rid => (
-                                        <div key={rid} title={`broker-${rid} (ISR)`} style={{
-                                            width: 6, height: 6, borderRadius: '50%',
-                                            background: rid === p.leaderId ? C.orange : C.green,
-                                            opacity: brokers.find(b => b.id === rid)?.isAlive ? 1 : 0.3,
-                                        }} />
-                                    ))}
+                                <div style={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+                                    {!p.isrIds || p.isrIds.length === 0
+                                        ? <span style={{ fontSize: 8, color: C.red }}>No ISR</span>
+                                        : p.isrIds.map(rid => (
+                                            <div key={rid} title={`broker-${rid} (ISR)`} style={{
+                                                width: 6, height: 6, borderRadius: '50%',
+                                                background: rid === p.leaderId ? C.orange : C.green,
+                                                opacity: brokers.find(b => b.id === rid)?.isAlive ? 1 : 0.25,
+                                            }} />
+                                        ))
+                                    }
                                 </div>
 
                                 {/* Offset counter */}
                                 <div style={{ fontSize: 10, color: C.dimmer, marginLeft: 'auto' }}>
-                                    {p.log?.length || 0} msgs
+                                    {p.nextOffset ?? p.log?.length ?? 0} msgs
                                 </div>
 
                                 {/* Consumer owner dots */}
                                 {owners.length > 0 && (
-                                    <div style={{ display: 'flex', gap: 3, marginLeft: 4 }} title="Consumer(s) assigned to this partition">
+                                    <div style={{ display: 'flex', gap: 3, marginLeft: 4 }} title="Consumer(s) assigned">
                                         {owners.map(o => (
                                             <div key={o.consumerId} style={{
                                                 width: 10, height: 10, borderRadius: '50%', background: o.color,
                                                 border: '1px solid rgba(0,0,0,0.3)',
-                                            }} title={`${o.groupId} → ${o.consumerId}`} />
+                                            }} title={`${o.groupId} to ${o.consumerId}`} />
                                         ))}
                                     </div>
                                 )}
@@ -522,15 +572,16 @@ function FlowDiagram({ topic, groups, brokers, particles, onAddConsumer, onRemov
                     })}
 
                     {/* Legend */}
-                    <div style={{ display: 'flex', gap: 14, fontSize: 9, color: C.dimmer, marginTop: 4, justifyContent: 'center' }}>
+                    <div style={{ display: 'flex', gap: 12, fontSize: 9, color: C.dimmer, marginTop: 4, justifyContent: 'center', flexWrap: 'wrap' }}>
                         <span>🟠 Leader broker</span>
                         <span>🟢 ISR follower</span>
-                        <span>🔵 Consumer (coloured by group)</span>
+                        <span>⚡ Offline partition</span>
+                        <span>🔵 Consumer (by group)</span>
                     </div>
                 </div>
 
-                {/* Arrow right */}
-                <ArrowWithParticles particles={[]} direction="right" />
+                {/* Right arrow → to consumers */}
+                <ArrowWithParticles particles={consumerParticles} />
 
                 {/* Consumers Zone */}
                 <div style={{ minWidth: 140, display: 'flex', flexDirection: 'column', gap: 6 }}>
@@ -578,7 +629,7 @@ function FlowDiagram({ topic, groups, brokers, particles, onAddConsumer, onRemov
                 💡 <strong style={{ color: C.cyan }}>Key Rule:</strong> One partition → at most one consumer per group at a time.
                 If you have <strong>more consumers than partitions</strong>, extras sit <span style={{ color: C.yellow }}>IDLE</span> (they become active only if another consumer crashes).
             </div>
-        </div>
+        </div >
     )
 }
 
@@ -677,7 +728,7 @@ function TopicBar({ topics, selectedTopic, selectTopic }) {
             <span style={{ fontSize: 11, color: C.dim, marginRight: 4 }}>Viewing topic:</span>
             {topics.map(t => (
                 <button key={t.name} onClick={() => selectTopic(t.name)} style={{
-                    padding: '5px 14px', borderRadius: 20, border: 'none', cursor: 'pointer', fontSize: 12,
+                    padding: '5px 14px', borderRadius: 20, cursor: 'pointer', fontSize: 12,
                     background: selectedTopic === t.name ? 'rgba(168,85,247,0.2)' : 'rgba(255,255,255,0.04)',
                     color: selectedTopic === t.name ? '#c084fc' : C.dim,
                     fontWeight: selectedTopic === t.name ? 700 : 400,

@@ -78,7 +78,9 @@ export class ReplicationManager {
     if (!broker) return;
     broker.restart();
     this._logEvent('broker-up', null, brokerId);
-    // Re-join ISR after catch-up (simplified: immediate)
+    // Re-elect leaders for offline partitions & restore ISR
+    this.cluster.handleBrokerRestart(brokerId);
+    // Advance HWM / rebuild ISR state
     this.tick();
   }
 

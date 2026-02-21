@@ -111,7 +111,8 @@ export class Topic {
   }
 
   get totalMessages() {
-    return this.partitions.reduce((sum, p) => sum + p.log.length, 0);
+    // Use nextOffset (real cumulative offset) — log.length is capped at 200 per partition
+    return this.partitions.reduce((sum, p) => sum + (p.nextOffset ?? p.log.length), 0);
   }
 
   get totalOffsets() {
@@ -203,19 +204,23 @@ export class Cluster {
   electLeader(partition) {
     const aliveIds = this.aliveBrokers.map(b => b.id);
     const aliveISR = partition.isrIds.filter(id => aliveIds.includes(id));
-    if (aliveISR.length > 0 && aliveISR[0] !== partition.leaderId) {
+    if (aliveISR.length > 0) {
+      // Pick first alive ISR member as leader (already the leader = no change, that's fine)
       partition.leaderId = aliveISR[0];
       return partition.leaderId;
     }
-    // No viable replica: partition goes offline
-    if (!aliveIds.includes(partition.leaderId)) {
-      partition.leaderId = -1; // offline
-    }
-    return partition.leaderId;
+    // No alive ISR member: partition goes offline
+    partition.leaderId = -1;
+    return -1;
   }
 
   /** Run leader re-election for all partitions after broker failure */
   handleBrokerFailure(brokerId) {
+    // Update controller if it was the dead broker
+    if (this.controllerId === brokerId) {
+      const nextAlive = this.aliveBrokers.find(b => b.id !== brokerId);
+      this.controllerId = nextAlive ? nextAlive.id : -1; // -1 = no controller (full outage)
+    }
     this.topics.forEach(topic => {
       topic.partitions.forEach(partition => {
         if (partition.leaderId === brokerId) {
@@ -223,6 +228,34 @@ export class Cluster {
         }
         // Shrink ISR
         partition.isrIds = partition.isrIds.filter(id => id !== brokerId);
+      });
+    });
+    this._updateBrokerPartitionCounts();
+  }
+
+  /**
+   * Called when a broker comes back online.
+   * Re-elects leaders for any partition that went offline (leaderId === -1),
+   * re-expands ISR for the restarted broker, and restores the controller if needed.
+   */
+  handleBrokerRestart(brokerId) {
+    const aliveIds = this.aliveBrokers.map(b => b.id);
+
+    // Restore controller if there is none
+    if (this.controllerId === -1 || !aliveIds.includes(this.controllerId)) {
+      this.controllerId = brokerId;
+    }
+
+    this.topics.forEach(topic => {
+      topic.partitions.forEach(partition => {
+        // Re-elect for offline partitions
+        if (partition.leaderId === -1) {
+          this.electLeader(partition);
+        }
+        // Re-expand ISR: restarted broker rejoins if it was an original replica
+        if (partition.replicaIds.includes(brokerId) && !partition.isrIds.includes(brokerId)) {
+          partition.isrIds.push(brokerId);
+        }
       });
     });
     this._updateBrokerPartitionCounts();
