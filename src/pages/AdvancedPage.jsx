@@ -15,7 +15,7 @@ export default function AdvancedPage() {
     return (
         <div style={{ padding: '32px 40px', maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ marginBottom: 24 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', background: 'rgba(239,68,68,0.12)', color: '#ef4444', borderRadius: 20, border: '1px solid rgba(239,68,68,0.2)' }}>Modules 8–9</span>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', background: 'rgba(239,68,68,0.12)', color: '#ef4444', borderRadius: 20, border: '1px solid rgba(239,68,68,0.2)' }}>Module 6</span>
                 <h1 style={{ fontSize: 28, fontWeight: 800, marginTop: 8, letterSpacing: '-0.5px' }}>Advanced Topics</h1>
                 <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>ISR, storage internals, performance tuning, failure scenarios, exactly-once semantics, and real-world patterns.</p>
             </div>

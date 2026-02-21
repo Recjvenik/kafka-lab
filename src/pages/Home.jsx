@@ -6,7 +6,7 @@ const MODULES = [
     {
         path: '/learn',
         icon: BookOpen,
-        title: 'Kafka Basics',
+        title: 'Module 1: Kafka Basics',
         desc: 'What is Kafka, event streaming, pub/sub vs queue vs log. Start here.',
         color: '#f97316',
         tag: 'Beginner',
@@ -14,7 +14,7 @@ const MODULES = [
     {
         path: '/visualizer',
         icon: Layers,
-        title: 'Topics & Partitions',
+        title: 'Module 2: Topics & Partitions',
         desc: 'Create topics, set partitions, see leader assignment and partition distribution.',
         color: '#3b82f6',
         tag: 'Interactive',
@@ -22,7 +22,7 @@ const MODULES = [
     {
         path: '/producer',
         icon: Zap,
-        title: 'Producer Lab',
+        title: 'Module 3: Producer Lab',
         desc: 'Simulate producers with acks=0/1/all, keyed routing, retries, batching.',
         color: '#eab308',
         tag: 'Simulator',
@@ -30,7 +30,7 @@ const MODULES = [
     {
         path: '/consumers',
         icon: Users,
-        title: 'Consumer Groups',
+        title: 'Module 4: Consumer Groups',
         desc: 'The most important module. Configure partitions, consumers, groups. See idle consumers, lag, rebalancing.',
         color: '#22c55e',
         tag: 'Critical',
@@ -38,7 +38,7 @@ const MODULES = [
     {
         path: '/scenarios',
         icon: GitBranch,
-        title: 'Scenarios',
+        title: 'Module 5: Scenarios',
         desc: 'Offset behavior, reset policies, rebalancing, delivery semantics, ordering guarantees.',
         color: '#a855f7',
         tag: 'Deep Dive',
@@ -46,7 +46,7 @@ const MODULES = [
     {
         path: '/advanced',
         icon: Cpu,
-        title: 'Advanced Topics',
+        title: 'Module 6: Advanced Topics',
         desc: 'ISR, replication, storage internals, exactly-once, performance tuning, failure scenarios.',
         color: '#ef4444',
         tag: 'Advanced',
@@ -54,7 +54,7 @@ const MODULES = [
     {
         path: '/playground',
         icon: Play,
-        title: 'Full Playground',
+        title: 'Module 7: Full Playground',
         desc: 'Open sandbox: configure everything, watch live message flow with real-time metrics.',
         color: '#06b6d4',
         tag: 'Sandbox',
@@ -62,10 +62,18 @@ const MODULES = [
     {
         path: '/compare',
         icon: BarChart2,
-        title: 'Kafka vs Others',
+        title: 'Module 8: Kafka vs Others',
         desc: 'Compare Kafka with RabbitMQ, SQS, Pulsar — ordering, throughput, replayability.',
         color: '#f43f5e',
         tag: 'Comparison',
+    },
+    {
+        path: '/quizzes',
+        icon: Activity,
+        title: 'Module 9: Quizzes',
+        desc: 'Test your knowledge from basics to advanced Kafka internals.',
+        color: '#60a5fa',
+        tag: 'Knowledge',
     },
 ]
 

@@ -14,7 +14,7 @@ export default function ScenariosPage() {
     return (
         <div style={{ padding: '32px 40px', maxWidth: 1100, margin: '0 auto' }}>
             <div style={{ marginBottom: 24 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', background: 'rgba(168,85,247,0.12)', color: '#a855f7', borderRadius: 20, border: '1px solid rgba(168,85,247,0.2)' }}>Module 7</span>
+                <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', background: 'rgba(168,85,247,0.12)', color: '#a855f7', borderRadius: 20, border: '1px solid rgba(168,85,247,0.2)' }}>Module 5</span>
                 <h1 style={{ fontSize: 28, fontWeight: 800, marginTop: 8, letterSpacing: '-0.5px' }}>Scenarios Lab</h1>
                 <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>Deep-dive into offsets, rebalancing, delivery guarantees, and ordering.</p>
             </div>

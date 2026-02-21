@@ -180,7 +180,7 @@ export default function PlaygroundPage() {
 
             {/* ── page header ── */}
             <div style={{ marginBottom: 20 }}>
-                <span style={tagStyle(C.cyan)}>Full Sandbox</span>
+                <span style={tagStyle(C.cyan)}>Module 7 — Full Sandbox</span>
                 <h1 style={{ fontSize: 24, fontWeight: 800, marginTop: 8, letterSpacing: '-0.5px', marginBottom: 2 }}>
                     Kafka Playground
                 </h1>

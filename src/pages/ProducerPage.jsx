@@ -71,7 +71,7 @@ export default function ProducerPage() {
 
     return (
         <div style={{ padding: '32px 40px', maxWidth: 1200, margin: '0 auto' }}>
-            <PageHeader title="Producer Simulator" tag="Module 4" color="#eab308"
+            <PageHeader title="Producer Simulator" tag="Module 3" color="#eab308"
                 subtitle="Configure acks, retries, keyed routing. Watch messages flow to partitions with latency tradeoffs." />
 
             <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, marginTop: 28 }}>

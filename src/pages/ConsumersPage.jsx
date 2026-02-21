@@ -100,7 +100,7 @@ export default function ConsumersPage() {
 function PageHeader() {
     return (
         <div style={{ marginBottom: 24 }}>
-            <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', background: 'rgba(34,197,94,0.12)', color: '#22c55e', borderRadius: 20, border: '1px solid rgba(34,197,94,0.2)' }}>Module 5 & 6 — Critical</span>
+            <span style={{ fontSize: 11, fontWeight: 700, padding: '3px 10px', background: 'rgba(34,197,94,0.12)', color: '#22c55e', borderRadius: 20, border: '1px solid rgba(34,197,94,0.2)' }}>Module 4 — Critical</span>
             <h1 style={{ fontSize: 28, fontWeight: 800, marginTop: 8, letterSpacing: '-0.5px' }}>Consumer Groups Playground</h1>
             <p style={{ color: '#64748b', fontSize: 14, marginTop: 4 }}>
                 The most important Kafka concept. Learn why consumer groups exist, how partitions are assigned, and what happens with idle consumers.

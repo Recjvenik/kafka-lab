@@ -26,12 +26,15 @@ An immersive, production-quality React application designed to teach Apache Kafk
 ### 📚 Learning Modules
 | Module | Focus |
 |---|---|
-| **Kafka Basics** | Event logs, Pub-Sub vs Queue, ZooKeeper vs KRaft. |
-| **Topics & Partitions** | Visualise partition distribution and broker leadership. |
-| **Producer Simulator** | Tradeoffs between latency and durability (acks). |
-| **Consumer Groups** | Group dynamics, fan-out patterns, and idle consumer behavior. |
-| **Scenarios Lab** | Rebalancing, offset reset strategies, and delivery semantics. |
-| **Advanced** | Log compaction, performance tuning, and 20+ real-world concepts. |
+| **M1: Kafka Basics** | Event logs, Pub-Sub vs Queue, ZooKeeper vs KRaft. |
+| **M2: Topics & Partitions** | Visualise partition distribution and broker leadership. |
+| **M3: Producer Lab** | Tradeoffs between latency and durability (acks). |
+| **M4: Consumer Groups** | Group dynamics, fan-out patterns, and idle consumer behavior. |
+| **M5: Scenarios Lab** | Rebalancing, offset reset strategies, and delivery semantics. |
+| **M6: Advanced** | Log compaction, performance tuning, and 20+ real-world concepts. |
+| **M7: Playground** | Full sandbox cluster with live animated flow diagram. |
+| **M8: Comparisons** | Kafka vs RabbitMQ, SQS, Pulsar. |
+| **M9: Quizzes** | 30+ interactive questions on Kafka internals. |
 
 ---
 

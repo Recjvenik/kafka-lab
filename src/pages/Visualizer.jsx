@@ -25,7 +25,7 @@ export default function Visualizer() {
 
     return (
         <div style={{ padding: '32px 40px', maxWidth: 1200, margin: '0 auto' }}>
-            <PageHeader title="Topics & Partitions Visualizer" tag="Module 3" color="#3b82f6"
+            <PageHeader title="Topics & Partitions Visualizer" tag="Module 2" color="#3b82f6"
                 subtitle="Create topics, set partitions, observe leader assignment across brokers." />
 
             <div style={{ display: 'grid', gridTemplateColumns: '280px 1fr', gap: 24, marginTop: 28 }}>
